@@ -188,6 +188,6 @@ Web安装Zabbix
 
 ![Image one](image/02.png)
 
-Zabbixa安装成功
+Zabbix监控平台安装成功
 
 ![Image one](image/03.png)
