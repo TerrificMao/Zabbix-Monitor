@@ -217,7 +217,7 @@ service apache2 restart
 
 ![Image one](image/01.png)
 
-公网IP: 52.80.221.137，Zabbix UI界面安装地址: http://52.80.221.137/zabbix/
+EC2公网IP: 52.80.221.137，Zabbix UI界面安装地址: http://52.80.221.137/zabbix/ (访问地址已失效)
 
 ![Image one](image/02.png)
 
