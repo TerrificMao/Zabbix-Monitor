@@ -360,7 +360,15 @@ CPU使用率指标监控
 
 ![Image one](image/11.png)
 
-zabbix_agent端自动安装脚本，仅供参考：http://blog.51cto.com/pynliu/1569596
+CPU load
+
+![Image one](image/12.png)
+
+
+
+
+
+附录：zabbix_agent端自动安装脚本，仅供参考：http://blog.51cto.com/pynliu/1569596
 
 ```bash
 #!/bin/bash
