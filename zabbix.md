@@ -1,8 +1,14 @@
 ## 安装Zabbix
 
-https://yunjin-keji.com/install-zabbix3-on-amazon-linux
+Zabbix 是一个企业级的分布式开源监控方案。
 
-安装要求: Zabbix同时需要物理内存和磁盘空间。刚开始使用Zabbix，建议128MB物理内存和256MB可用磁盘空间。如果计划对监控的参数进行长期保存，应考虑至少在数据库中预留几个GB的空间，以用来保留历史数据。 每个Zabbix的守护进程需要与数据库服务器建立多个连接。分配给连接的内存数量，取决于数据库引擎的配置。 
+Zabbix是一款能够监控各种网络参数以及服务器健康性和完整性的软件。Zabbix使用灵活的通知机制，允许用户为几乎任何事件配置基于邮件的告警。这样可以快速反馈服务器的问题。基于已存储的数据，Zabbix提供了出色的报告和数据可视化功能。这些功能使得Zabbix成为容量规划的理想方案。
+
+安装要求: Zabbix同时需要物理内存和磁盘空间。刚开始使用Zabbix，建议128MB物理内存和256MB可用磁盘空间。如果计划对监控的参数进行长期保存，应考虑至少在数据库中预留几个GB的空间，以用来保留历史数据。 每个Zabbix的守护进程需要与数据库服务器建立多个连接。分配给连接的内存数量，取决于数据库引擎的配置。
+
+![Image one](image/zabbix-dashboard.png)
+
+https://yunjin-keji.com/install-zabbix3-on-amazon-linux 
 
 ## 一、安装Zabbix以及核心组件
 
@@ -238,5 +244,23 @@ https://www.zabbix.com/documentation/3.4/zh/manual/installation/upgrade
 
 ## 五、添加监控主机
 
+Zabbix中，可以通过*配置（Configuration）→ 主机（Hosts）*菜单，查看已配置的主机信息。默认已有一个名为'Zabbix server'的预先定义好的主机。
+
 ![Image one](image/05.png)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
