@@ -50,9 +50,14 @@ Starting httpd:
 [root@ip-10-200-1-44 ec2-user]# rpm -ivh http://repo.zabbix.com/zabbix/3.0/rhel/6/x86_64/zabbix-release-3.0-1.el6.noarch.rpm
 ```
 
-最新的版本请查看
+查看最新Zabbix版本（裸机采用https方式安装会出错，换成http是可以的。）
 https://www.zabbix.com/documentation/3.4/zh/manual/installation/install_from_packages
-安装Zabbix agent以及相关的组件
+
+```bash
+rpm -ivh http://repo.zabbix.com/zabbix/3.4/rhel/6/x86_64/zabbix-release-3.4-1.el6.noarch.rpm  
+```
+
+安装Zabbix监控的相关组件（采用pgsql）
 
 ```bash
 [root@ip-10-200-1-44 ec2-user]# yum install -y \
@@ -65,9 +70,15 @@ https://www.zabbix.com/documentation/3.4/zh/manual/installation/install_from_pac
 > zabbix-get
 ```
 
-```
+```bash
 也可以安装mysql引擎，但是生产环境机器数据很多的话官网建议使用pgsql
 yum install zabbix-server-mysql zabbix-web-mysql
+```
+
+**被监控服务器安装比较简单，只安装Zabbix Agent即可，如下:**
+
+```bash
+[root@ip-10-200-1-214 ec2-user]# yum install zabbix-agent
 ```
 
 拷贝Zabbix使用的httpd配置文件
@@ -275,21 +286,231 @@ Zabbix中，可以通过*配置（Configuration）→ 主机（Hosts）*菜单�
 
 
 
+## 八、Zabbix Client客户端配置
 
+```bash
+[root@ip-10-200-1-214 ec2-user]# rpm -ivh http://repo.zabbix.com/zabbix/3.4/rhel/6/x86_64/zabbix-release-3.4-1.el6.noarch.rpm
+获取http://repo.zabbix.com/zabbix/3.4/rhel/6/x86_64/zabbix-release-3.4-1.el6.noarch.rpm
+准备中...                          ################################# [100%]
+正在升级/安装...
+   1:zabbix-release-3.4-1.el6     ################################# [100%]
+```
 
+**被监控服务器安装比较简单，只安装Zabbix Agent即可，如下:**
 
+```bash
+[root@ip-10-200-1-214 ec2-user]# yum install zabbix-agent
+```
 
+修改配置
 
+```bash
+[root@ip-10-200-1-214 ec2-user]# vim /etc/zabbix/zabbix_agentd.conf
+```
 
+**主动模式和被动模式:** 
 
+主动或者被动是**相对客户端**来讲的  被动模式，服务端会主动连接客户端获取监控项目数据，客户端被动地接受连接，并把监控信息传递给服务端  主动模式，客户端会主动把监控数据汇报给服务端，服务端只负责接收即可。当客户端数量非常多时，建议使用**主动**模式，这样可以降低服务端的压力。
 
+服务端有公网ip，客户端只有内网ip，但却能连外网，这种场景适合主动模式。
 
+这是自定义的主机名，一会还需要在web界面下设置同样的主机名。
 
+```bash
+Server=10.200.1.44			#定义服务端的ip（被动模式）
+ServerActive=10.200.1.44	#定义服务器端的ip（主动模式）
+Hostname=zabbix_server1		#这是自定义的主机名，一会还需要在web界面下设置同样的主机名。
+PidFile=/var/run/zabbix/zabbix_agentd.pid
+LogFile=/var/log/zabbix/zabbix_agentd.log
+```
 
+设置zabbix-agent开机自动启动
 
+```bash
+[root@ip-10-200-1-214 ec2-user]# chkconfig zabbix-agent on
+```
 
+启动zabbix-agent
 
+```bash
+[root@ip-10-200-1-214 ec2-user]# service zabbix-agent start
+Starting Zabbix agent:                                     [  OK  ]
+```
 
+确认启动成功
+
+```bash
+[root@ip-10-200-1-214 ec2-user]# ps -ef | grep zabbix
+```
+
+![Image one](image/09.png)
+
+然后在Zabbix Server端执行，有返回说明成功了。
+
+```bash
+[ec2-user@ip-10-200-1-44 etc]$ zabbix_get -s 10.200.1.214 -p10050 -k"system.uptime"
+23440
+```
+
+内存指标监控
+
+![Image one](image/10.png)
+
+CPU使用率指标监控
+
+![Image one](image/11.png)
+
+zabbix_agent端自动安装脚本，仅供参考：http://blog.51cto.com/pynliu/1569596
+
+```bash
+#!/bin/bash
+# time 2014/12/04 11:00  by Lance
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/root/bin
+export PATH
+
+#server IP
+ip=172.16.8.129
+
+#zabbix源码文件存放目录
+dir_zabbix=/vol/myfile
+
+#判断zabbix是否已安装
+check_install(){
+if [ -f /etc/init.d/zabbix* ]; then
+	echo "`ls /etc/init.d/zabbix*`启动脚本已存在!"
+fi
+if [ -d /usr/local/zabbix*  ]; then
+	echo "`ls -d /usr/local/zabbix`目录已存在!"
+	echo "安装停止"
+	exit 0
+fi
+}
+
+#添加zabbix用户
+check_user(){
+if [ `grep zabbix /etc/passwd|wc -l` -lt 1 ]; then
+	useradd zabbix -s /sbin/nolog
+fi
+}
+
+#1.验证zabbix程序是否在/vol/myfile目录下：
+check_zabbix_file(){
+if [ ! -f $dir_zabbix/zabbix* ];then
+	echo "zabbix安装程序不存在，请确认放在$dir_zabbix目录下。程序停止!"
+	exit 0
+else
+	echo "文件存在，文件名是:`ls $dir_zabbix/zabbix*.gz`"
+fi
+
+echo "检查完毕，开始安装。。。"
+sleep 3
+}
+
+#2.解压
+configure_make(){
+#date >>$dir_zabbix/zabbix_install.log
+cd $dir_zabbix
+tar zxvf zabbix*.gz
+
+#验证编译环境
+if [ `rpm -qa gcc gcc-c++ |wc -l` -le 1 ] ; then
+	yum install -y gcc gcc-c++
+fi
+
+#编译安装
+cd $dir_zabbix/zabbix-*
+./configure prefix=/usr/local/zabbix --enable-agent 2>> $dir_zabbix/zabbix_install.log
+make && make install  2>> $dir_zabbix/zabbix_install.log
+
+#拷贝启动脚本
+cp -r misc/init.d/fedora/core/zabbix_agentd /etc/init.d
+
+#删除解压文件
+file=`ls $dir_zabbix/zabbix*.tar.gz | awk -F '.tar.gz' '{print $1}'`
+rm -rf $file
+cd /vol
+
+#修改启动脚本agentd配置文件并设置开机自启--启动脚本
+sed -i 's/BASEDIR=\/usr\/local/BASEDIR=\/usr\/local\/zabbix/' /etc/init.d/zabbix_agentd
+chmod a+x /etc/init.d/zabbix_agentd
+chkconfig zabbix_agentd on
+
+echo "编译安装、开机自启完成！"
+sleep 3
+}
+
+#3.把zabbix_agent加入系统service
+check_service(){
+num=`cat /etc/services | grep zabbix|wc -l`
+if [ "$num" -le "1" ]; then
+cat >>/etc/services <<EOF
+zabbix-agent 10050/tcp   # Zabbix Agent
+zabbix-agent 10050/udp   # Zabbix Agent
+EOF
+else
+	echo "zabbix已存在系统服务，无修改！"
+fi
+}
+
+#4.修改zabbix_agentd.conf配置文件
+check_agentd(){
+#read -p "请输入zabbix监控服务器端IP地址,Server=" i
+sed -i "s/^Server=.*/Server=$ip/" /usr/local/zabbix/etc/zabbix_agentd.conf
+
+echo "配置文件agentd修改完成。。。"
+sleep 3
+}
+
+#5.重启服务
+restart(){
+/etc/init.d/zabbix_agentd restart
+
+echo "Congratulation , start successful !"
+}
+
+####启动提示：
+zabbix(){
+clear
+echo "###############Zabbix_agent安装、检测工具##################"
+echo "#                                                         #"
+echo "#                    0.自动安装                            #"
+echo "#                    1.判断安装文件是否存在                  #"
+echo "#                    2.解压并编译安装                       #"
+echo "#                    3.检测添加系统服务                     #"
+echo "#                    4.修改监控服务器IP                     #"
+echo "#                    5.重启服务                            #"
+echo "#                                                         #" 
+echo "###########################################################"
+read -p "请输入安装选项:" cc
+case $cc in
+0)
+check_install && check_user && check_zabbix_file && configure_make && check_service && check_agentd && restart
+;;
+1)
+check_zabbix_file
+;;
+2)
+configure_make
+;;
+3)
+check_service
+;;
+4)
+check_agentd
+;;
+5)
+restart
+;;
+6)
+check_user
+;;
+*)
+echo "输入不合法，请重新输入检测项序号"  && zabbix
+;;
+esac
+}
+zabbix
+```
 
 
 
