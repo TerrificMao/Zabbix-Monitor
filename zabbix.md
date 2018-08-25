@@ -2,6 +2,12 @@
 
 https://yunjin-keji.com/install-zabbix3-on-amazon-linux
 
+安装要求: Zabbix同时需要物理内存和磁盘空间。刚开始使用Zabbix，建议128MB物理内存和256MB可用磁盘空间。如果计划对监控的参数进行长期保存，应考虑至少在数据库中预留几个GB的空间，以用来保留历史数据。 每个Zabbix的守护进程需要与数据库服务器建立多个连接。分配给连接的内存数量，取决于数据库引擎的配置。 
+
+## 一、安装Zabbix以及核心组件
+
+监控主机数量达到上千台，数据库建议是使用PostgreSQL 8.3以上的版本**
+
 ```bash
 $ sudo yum update -y
 $ cat /etc/system-release
@@ -36,7 +42,13 @@ Starting httpd:
 
 ```bash
 [root@ip-10-200-1-44 ec2-user]# rpm -ivh http://repo.zabbix.com/zabbix/3.0/rhel/6/x86_64/zabbix-release-3.0-1.el6.noarch.rpm
+```
+
+最新的版本请查看
+https://www.zabbix.com/documentation/3.4/zh/manual/installation/install_from_packages
 安装Zabbix agent以及相关的组件
+
+```bash
 [root@ip-10-200-1-44 ec2-user]# yum install -y \
 > zabbix-agent \
 > zabbix-web \
@@ -45,6 +57,11 @@ Starting httpd:
 > zabbix-sender \
 > zabbix-java-gateway \
 > zabbix-get
+```
+
+```
+也可以安装mysql引擎，但是生产环境机器数据很多的话官网建议使用pgsql
+yum install zabbix-server-mysql zabbix-web-mysql
 ```
 
 拷贝Zabbix使用的httpd配置文件
@@ -73,16 +90,6 @@ Initializing database:                                     [  OK  ]
 [root@ip-10-200-1-44 doc]# service postgresql start
 Starting postgresql service:                               [  OK  ]
 ```
-
-
-
-
-
-
-
-
-
-
 
 默认用户postgres设定密码
 
@@ -155,7 +162,7 @@ INSERT 0 1
 COMMIT
 ```
 
-修改zabbix配置文件
+修改zabbix配置文件，配置数据库连接信息，主要是DBHost=localhost、DBName=zabbix、DBUser=zabbix、DBPassword=zabbix
 
 ```bash
 -bash-4.2$ exit
@@ -175,12 +182,32 @@ DBPassword=<Password>
 # DBPassword=
 ↓
 DBPassword=<Password>
-[root@ip-10-200-1-44 doc]# service zabbix-server start
+[root@ip-10-200-1-44 doc]# service zabbix-server start //启动Zabbix Server进程 
 Starting Zabbix server:                                    [  OK  ]
-[root@ip-10-200-1-44 doc]# chkconfig zabbix-server on
+[root@ip-10-200-1-44 doc]# chkconfig zabbix-server on  //设置开机自启动
 ```
 
-Web安装Zabbix
+**看情况编辑Zabbix前端的PHP配置**
+
+Zabbix前端的Apache配置文件位于 /etc/apache2/conf.d/zabbix 或者 /etc/apache2/conf-enabled/zabbix.conf 。一些PHP设置已经完成了配置。
+
+```bash
+php_value max_execution_time 300
+php_value memory_limit 128M
+php_value post_max_size 16M
+php_value upload_max_filesize 2M
+php_value max_input_time 300
+php_value always_populate_raw_post_data -1
+# php_value date.timezone Europe/Riga
+```
+
+依据所在时区，你可以取消 “date.timezone” 设置的注释，并正确配置它。在配置文件更改后，需要重启Apache Web服务器。
+
+```bash
+service apache2 restart
+```
+
+## 二、Web界面安装Zabbix
 
 ![Image one](image/01.png)
 
@@ -188,6 +215,28 @@ Web安装Zabbix
 
 ![Image one](image/02.png)
 
-Zabbix监控平台安装成功
+Zabbix监控平台安装成功。默认的用户名／密码为 Admin/zabbix。
 
 ![Image one](image/03.png)
+
+## 三、Zabbix升级，大致骤分为7个。
+
+https://www.zabbix.com/documentation/3.4/zh/manual/installation/upgrade
+
+## 四、Zabbix用户管理
+
+在*管理（Administration） → 用户（Users）*下 查看用户信息
+
+ Zabbix在安装后只定义了两个用户。 
+
+-  'Admin' 用户是Zabbix的一个超级管理员，拥有所有权限。 
+-  'Guest' 用户是一个特殊的默认用户。如果你没有登陆，你访问Zabbix的时候使用的其实是“guest”权限。默认情况下，“guest”用户对Zabbix中的对象没有任何权限。
+
+例如，我创建了一个Damon Mao的用户，并加入到Zabbix administrator组。
+
+![Image one](image/04.png)
+
+## 五、添加监控主机
+
+![Image one](image/05.png)
+
