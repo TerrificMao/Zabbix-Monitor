@@ -248,6 +248,49 @@ Zabbix中，可以通过*配置（Configuration）→ 主机（Hosts）*菜单�
 
 ![Image one](image/05.png)
 
+![Image one](image/06.png)
+
+## 六、新增监控项
+
+监控项是Zabbix中获得数据的基础。没有监控项，就没有数据——因为一个主机中只有监控项定义了单一的指标或者需要获得的数据。
+
+![Image one](image/07.png)
+
+ 如果你在当前界面中没有看到监控项的信息，请确认： 
+
+-  你输入的监控项'值（Key）' 和 '信息类型（Type of information）' 同截图中的一致
+-  agent和server都在运行状态
+-  主机状态为'监控（Monitored）'并且它的可用性图标是绿色的 
+-  监控项处于启用状态
+
+##### 图表
+
+当监控项运行了一段时间后，可以查看可视化图表。  [简单图表](https://www.zabbix.com/documentation/3.4/manual/config/visualisation/graphs/simple) 适用于任何被监控的数值型（numeric）监控项，且不需要额外的配置。这些图表会在运行时生成。 
+
+前往*监控（Monitoring） → 最新数据（Latest data）*，然后点击监控项后的'图表（Graph）'链接以查看图表。 
+
+![Image one](image/08.png)
+
+## 七、新建触发器
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
